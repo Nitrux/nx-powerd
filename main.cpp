@@ -41,7 +41,12 @@ public:
     NXPowerDaemon() {
         const char* stateHome=getenv("XDG_STATE_HOME"); const char* home=getenv("HOME");
         stateDir=stateHome&&*stateHome?stateHome:(std::string(home?home:"/tmp")+"/.local/state");
-        stateDir+="/nx-powerd"; fs::create_directories(stateDir); configPath=std::string(home&&*home?home:"/tmp")+"/.config/nx-powerd/nx-power.conf"; debug=std::string(getenv("DEBUG")?getenv("DEBUG"):"0")=="1"; log("start pid="+std::to_string(getpid()));
+        stateDir += "/nx-powerd";
+        fs::create_directories(stateDir);
+        configPath = std::string(home && *home ? home : "/tmp") + "/.config/nx-powerd/nx-powerd.conf";
+        ensureConfig();
+        debug = std::string(getenv("DEBUG") ? getenv("DEBUG") : "0") == "1";
+        log("start pid=" + std::to_string(getpid()));
     }
     void run() {
         PowerConfig config=readConfig(); PowerState previous=readState();
@@ -77,6 +82,31 @@ private:
             return s;
         s.valid = true;
         return s;
+    }
+    void ensureConfig() const
+    {
+        if (fs::exists(configPath))
+            return;
+
+        std::error_code error;
+        fs::create_directories(fs::path(configPath).parent_path(), error);
+        if (error) {
+            log("Could not create config directory: " + error.message());
+            return;
+        }
+
+        std::ofstream config(configPath);
+        if (!config) {
+            log("Could not create config file: " + configPath);
+            return;
+        }
+
+        config << "[Daemon]\n"
+               << "enabled=true\n\n"
+               << "[Profiles]\n"
+               << "powerSaverMax=" << defaultPowerSaverMax << "\n"
+               << "balancedMax=" << defaultBalancedMax << "\n"
+               << "performanceMin=" << defaultPerformanceMin << "\n";
     }
     void notify(const std::string& urgency,const std::string& icon,const std::string& title,const std::string& body) const {
         if (access("/usr/bin/notify-send",X_OK)!=0&&access("/bin/notify-send",X_OK)!=0) return;
