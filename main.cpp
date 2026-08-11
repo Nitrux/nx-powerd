@@ -117,7 +117,7 @@ private:
     PowerConfig readConfig() const { PowerConfig config; std::ifstream file(configPath); std::string line, section; while (std::getline(file,line)) { line=trim(line); if (line.empty()||line[0]=="#"[0]||line[0]==";"[0]) continue; if (line.front()=="["[0]&&line.back()=="]"[0]) { section=trim(line.substr(1,line.size()-2)); continue; } const auto separator=line.find("="[0]); if (separator==std::string::npos) continue; const auto key=trim(line.substr(0,separator)), value=trim(line.substr(separator+1)); if (section=="Daemon"&&key=="enabled") config.enabled=value=="true"||value=="1"||value=="yes"||value=="on"; if (section=="Profiles") { try { const int number=std::stoi(value); if (key=="powerSaverMax") config.powerSaverMax=number; if (key=="balancedMax") config.balancedMax=number; if (key=="performanceMin") config.performanceMin=number; } catch (...) {} } } config.powerSaverMax=std::clamp(config.powerSaverMax,0,98); config.balancedMax=std::clamp(config.balancedMax,config.powerSaverMax+1,99); config.performanceMin=std::clamp(config.performanceMin,config.balancedMax+1,100); return config; }
     void applyProfile(const PowerState& s,const PowerConfig& config,bool notifyChange) {
         std::string target,icon="battery-medium",body; int level=50;
-        if (!s.onBattery) { target="performance"; level=65; icon="ac-battery-medium-charging"; body="AC detected: performance"; }
+        if (!s.onBattery) { target="performance"; level=65; icon="battery-medium-charging"; body="AC detected: performance"; }
         else if (s.capacity<=config.powerSaverMax) { target="power-saver"; level=20; icon="battery-low"; body="On battery ("+std::to_string(s.capacity)+"%): power-saver"; }
         else if (s.capacity>=config.performanceMin) { target="performance"; level=65; icon="battery-full"; body="On battery ("+std::to_string(s.capacity)+"%): performance"; }
         else { target="balanced"; body="On battery ("+std::to_string(s.capacity)+"%): balanced"; }
@@ -130,7 +130,7 @@ private:
         log("profile: " + current + " -> " + target + " (" + body + ")");
     }
     void transition(const PowerState& oldState,const PowerState& s) {
-        if (!s.onBattery&&oldState.onBattery) { criticalHit=false; acSince=Clock::now(); notify("low","ac-adapter","AC Connected","Charging."); log("event: on-ac"); }
+        if (!s.onBattery&&oldState.onBattery) { criticalHit=false; acSince=Clock::now(); notify("low","battery-good-charging","AC Connected","Charging."); log("event: on-ac"); }
         else if (s.onBattery&&!oldState.onBattery) { chargeHit=false; fullHit=false; acSince=Clock::now(); log("event: on-battery"); }
     }
     void notifications(const PowerState& s) {
