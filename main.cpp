@@ -135,7 +135,7 @@ private:
     }
     void notifications(const PowerState& s) {
         if (!s.onBattery) {
-            if (!chargeHit&&s.capacity>=chargeNotifyLevel&&s.capacity<fullNotifyLevel) { chargeHit=true; notify("normal","battery","Charge Complete","Battery is at "+std::to_string(s.capacity)+"%. Consider stopping at ~80% for longevity."); }
+            if (!chargeHit&&s.capacity>=chargeNotifyLevel&&s.capacity<fullNotifyLevel) { chargeHit=true; notify("normal","battery-full","Charge Complete","Battery is at "+std::to_string(s.capacity)+"%. Consider stopping at ~80% for longevity."); }
             if (!fullHit&&s.capacity>=fullNotifyLevel) { fullHit=true; notify("normal","battery-full","Battery Charged","Battery is at "+std::to_string(s.capacity)+"%."); }
         } else if (!criticalHit&&s.capacity<=defaultPowerSaverMax) { criticalHit=true; notify("critical","battery-low","Battery Critical","Battery is at "+std::to_string(s.capacity)+"%. Please connect AC power."); }
         if (!s.onBattery) reminder(s);
@@ -146,7 +146,7 @@ private:
         auto minutes = std::chrono::duration_cast<std::chrono::minutes>(Clock::now() - acSince).count();
         if (minutes < pluggedReminderMinutes)
             return;
-        notify("normal","battery","Battery Care","If you plan to stay on AC, consider enabling a charge limit (if supported) or unplugging occasionally to reduce long-term wear."); acSince=Clock::now(); log("reminder: on-ac pct="+std::to_string(s.capacity));
+        notify("normal","battery-full","Battery Care","If you plan to stay on AC, consider enabling a charge limit (if supported) or unplugging occasionally to reduce long-term wear."); acSince=Clock::now(); log("reminder: on-ac pct="+std::to_string(s.capacity));
     }
 };
 int main() {
